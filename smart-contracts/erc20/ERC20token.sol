@@ -1874,6 +1874,17 @@ contract BaseToken is ERC20Capped, ERC20Burnable, ERC1363, Roles, TokenRecover {
     }
 
     /**
+     * @dev Tokens can be minted only when the corresponding request has been approved by the owner
+     */
+    modifier checkMinter(uint reqID, address minter) {
+        require(
+            MintRequests[reqID].minter == minter,
+            "BaseToken: Mint request not owned by minter address"
+        );
+        _;
+    }
+
+    /**
      * @param name Name of the token
      * @param symbol A symbol to be used as ticker
      * @param decimals Number of decimals. All the operations are done using the smallest and indivisible token unit
@@ -2032,7 +2043,7 @@ contract BaseToken is ERC20Capped, ERC20Burnable, ERC1363, Roles, TokenRecover {
      * @dev Executes an approved/rejected mint request
      */
       
-    function executeMintRequest(uint reqID) public onlyMinter approved(reqID) canMint {
+    function executeMintRequest(uint reqID) public onlyMinter checkMinter(reqID, _msgSender()) approved(reqID) canMint {
         _mint(MintRequests[reqID].to, MintRequests[reqID].amount);
         MintRequests[reqID].status = MintStatus.Executed;
     }
